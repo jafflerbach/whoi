@@ -1,0 +1,120 @@
+---
+title: "tidyr"
+author: "Jamie Afflerbach"
+date: "10/23/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+## read in gapminder data in wide format
+gap_wide <- readr::read_csv('https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/gapminder_wide.csv')
+```
+
+## tidyr::gather()
+
+```{r}
+gap_long <- gap_wide %>% 
+  gather(key   = obstype_year,
+         value = obs_values,
+         -continent, -country)
+```
+
+## tidyr::separate()
+
+```{r}
+gap_long <- gap_wide %>% 
+  gather(key   = obstype_year,
+         value = obs_values,
+         -continent, -country) %>% 
+  separate(col = obstype_year,
+           into = c("obs_type", "year"),
+           sep = "_",
+           convert = TRUE)
+```
+
+## plot long data
+
+```{r}
+canada_df <- gap_long %>% 
+  filter(country == "Canada",
+         obs_type == "lifeExp")
+
+ggplot(data = canada_df, aes(x = year, y = obs_values)) +
+  geom_line()
+```
+
+Plot the life expectancy of all countries in the Americas
+
+```{r}
+life_df <- gap_long %>% 
+  filter(obs_type == "lifeExp",
+         continent == "Americas")
+
+ggplot(data = life_df, aes(x = year, y = obs_values, color = country)) +
+  geom_line()
+```
+
+## exercise
+
+Using gap_long, calculate and plot the the mean life expectancy for each continent over time from 1982 to 2007. Give your plot a title and assign x and y labels. Hint: use the dplyr::group_by() and dplyr::summarize() functions.
+
+```{r}
+continents <- gap_long %>%
+  filter(obs_type == "lifeExp",
+         year > 1980) %>% 
+  group_by(continent, year) %>%
+  summarize(mean_le = mean(obs_values)) %>% 
+  ungroup()
+
+#plot using ggplot
+ggplot(data = continents, aes(x = year, y = mean_le, color = continent)) +
+  geom_line() +
+  labs(x = "Year",
+       y = "Age (years)",
+       title = "Mean life expectancy") +
+  theme_bw()
+```
+
+## spread()
+
+```{r}
+gap_normal <- gap_long %>% 
+  spread(key = obs_type,
+         value = obs_values)
+```
+
+## Exercise
+
+7.6 Exercise
+
+Convert “gap_long” all the way back to gap_wide. Hint: you’ll need to create appropriate labels for all our new variables (time*metric combinations) with the opposite of separate: tidyr::unite().
+
+Knit the R Markdown file and sync to Github (pull, stage, commit, push)
+
+```{r}
+gap_wide_new <- gap_long %>% 
+  unite(col = var_names, obs_type, year, sep = "_") %>% 
+  spread(key = var_names,
+         value = obs_values)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
